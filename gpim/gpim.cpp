@@ -5,6 +5,7 @@
 #include <bitset>
 #include <iomanip>
 #include <string>
+#include <fstream>
 
 #include "mipsref.h"
 
@@ -109,71 +110,69 @@ uint32_t compile(const std::string& line)
 	return encoded;
 }
 
+void load_file(const std::string& path, char* buffer, size_t buffer_length)
+{
+	// Let's just pretend for now that we
+	std::ifstream inp(path, std::ios::in | std::ios::binary);
+
+	if (!inp.is_open())
+	{
+		std::cerr << "Failed to open the file!" << std::endl;
+		return;
+	}
+
+	inp.read(buffer, buffer_length * sizeof(char));
+
+	for (size_t i = 0; i < buffer_length; ++i)
+	{
+		std::cout << buffer[i] << " ";
+	}
+
+	// TODO: pasting into .bin pastes it as an ASCII strng, not as hex
+	// So, directly paste the hex into your bin file and then open it
+	// Here: 2108000A2129001401095020
+
+	inp.close();
+}
+
 // ADD $t0, $t1, $t2 : 0x012A4020 20 40
 // ADDI $t0, $t1, 2 : 0x21280002 20 0 -> 22
 int main(int argc, char** argv)
 {
 	if (argc == 1)
 	{
-		std::cerr << "Usage: " << argv[0] << " <instructions> <initial state>" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " <path> <file_length>" << std::endl;
 		return 1;
 	}
 
+	std::string inpf = argv[1];
+	int file_length = std::stoi(argv[2]);
+	char* buffer = new char[file_length];
 
-	uint32_t encoded = 0;
+	load_file(inpf, buffer, file_length);
 
-	if (strcmp(argv[1], "-lc") == 0 || strcmp(argv[1], "--line-compiler") == 0)
-	{
-		// Use the line-by-line compiler
+	uint32_t PC = 0;
 
-		while (true)
-		{
-			std::cout << "Enter MIPS R-Type (q to quit, p to pipe) " << std::endl;
+	// Buffer now stores the input, byte-addressable
+	// Thus, the PC needs to simply store an index
+	// - to hit words, it needs to be in multiples of 4
 
-			std::string input;
 
-			std::getline(std::cin, input);
+	// TODO:
 
-			if (input == "q") return 0;
-			if (input == "p") break;
-
-			encoded = compile(input);
-
-			std::cout << std::endl << ">> 0x" << std::hex << std::setw(8) << std::setfill('0') << encoded << std::dec <<
-				std::endl;
-		}
-	}
-
-	// Otherwise, run the normal compiler
-
-	if (encoded == 0) argv[1] += 2;
-
-	uint32_t bits = encoded > 0 ? encoded : std::stoul(argv[1], nullptr, 16);
+	uint32_t bits = 0;
+	
 
 	std::cout << "Instruction bits: " << std::bitset<32>(bits) << " (0x" << std::hex << std::setfill('0') << bits <<
 		std::dec << ")" << std::endl;
 
 	uint32_t registers[32] = {};
-	uint32_t PC = 0;
 	uint32_t HI_register = 0;
 	uint32_t LO_register = 0;
-
-	if (encoded > 0)
-	{
-		std::cout << "Register $t1 Initial State: ";
-		std::cin >> registers[9];
-
-		std::cout << "Register $t2 Initial State: ";
-		std::cin >> registers[10];
-	}
-	else
-	{
-		// Modify registers $t1 and $t2 to have an initial state
-		registers[9] = std::stol(argv[2], nullptr, 16);
-		registers[10] = std::stol(argv[3], nullptr, 16);
-	}
 
 	cycle(bits, registers, HI_register, LO_register, PC);
 
 	print_state(bits, registers, HI_register, LO_register, PC);
+
+	delete[] buffer;
 }
