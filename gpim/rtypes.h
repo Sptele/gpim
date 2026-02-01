@@ -1,0 +1,245 @@
+#pragma once
+
+#include <cstdint>
+#include <tuple>
+#include <string>
+
+#include "instrtype.h"
+
+
+enum r_types : uint8_t
+{
+	ADD,
+	AND,
+	JR,
+	NOR,
+	OR,
+	SLT,
+	SLL,
+	SRL,
+	SUB,
+	MFHI,
+	MFLO,
+	MULT,
+	SRA,
+	ADDU,
+	SLTU,
+	SUBU,
+	MULTU
+};
+
+static r_types get_r_type(const std::string& text)
+{
+	if (text == "add")
+		return ADD;
+	if (text == "addu")
+		return ADDU;
+	if (text == "and")
+		return AND;
+	if (text == "jr")
+		return JR;
+	if (text == "nor")
+		return NOR;
+	if (text == "or")
+		return OR;
+	if (text == "slt")
+		return SLT;
+	if (text == "sltu")
+		return SLTU;
+	if (text == "sll")
+		return SLL;
+	if (text == "srl")
+		return SRL;
+	if (text == "sub")
+		return SUB;
+	if (text == "subu")
+		return SUBU;
+	if (text == "mfhi")
+		return MFHI;
+	if (text == "mflo")
+		return MFLO;
+	if (text == "mult")
+		return MULT;
+	if (text == "multu")
+		return MULTU;
+	if (text == "sra")
+		return SRA;
+
+	throw std::invalid_argument("Unknown R-type function code");
+}
+
+static r_types get_r_type(const uint8_t& opcode, const uint8_t& funct)
+{
+	if (opcode != 0)
+	{
+		throw std::invalid_argument("Not an R-type instruction");
+	}
+
+	switch (funct)
+	{
+	case 0x20:
+		return ADD;
+	case 0x21:
+		return ADDU;
+	case 0x24:
+		return AND;
+	case 0x08:
+		return JR;
+	case 0x27:
+		return NOR;
+	case 0x25:
+		return OR;
+	case 0x2A:
+		return SLT;
+	case 0x2B:
+		return SLTU;
+	case 0x00:
+		return SLL;
+	case 0x02:
+		return SRL;
+	case 0x22:
+		return SUB;
+	case 0x23:
+		return SUBU;
+	case 0x10:
+		return MFHI;
+	case 0x12:
+		return MFLO;
+	case 0x18:
+		return MULT;
+	case 0x19:
+		return MULTU;
+	case 0x03:
+		return SRA;
+	default:
+		throw std::invalid_argument("Unknown R-type function code");
+	}
+}
+
+static std::tuple<uint8_t, uint8_t> get_opcode_funct(const r_types& r_type)
+{
+	switch (r_type)
+	{
+	case ADD:
+		return { 0, 0x20 };
+	case ADDU:
+		return { 0, 0x21 };
+	case AND:
+		return { 0, 0x24 };
+	case JR:
+		return { 0, 0x08 };
+	case NOR:
+		return { 0, 0x27 };
+	case OR:
+		return { 0, 0x25 };
+	case SLT:
+		return { 0, 0x2A };
+	case SLTU:
+		return { 0, 0x2B };
+	case SLL:
+		return { 0, 0x00 };
+	case SRL:
+		return { 0, 0x02 };
+	case SUB:
+		return { 0, 0x22 };
+	case SUBU:
+		return { 0, 0x23 };
+	case MFHI:
+		return { 0, 0x10 };
+	case MFLO:
+		return { 0, 0x12 };
+	case MULT:
+		return { 0, 0x18 };
+	case MULTU:
+		return { 0, 0x19 };
+	case SRA:
+		return { 0, 0x03 };
+	}
+
+	return {};
+}
+
+struct RInstruction : Instruction
+{
+	uint8_t opcode;
+	uint8_t funct;
+	uint8_t shamt;
+
+	uint8_t rs;
+	uint8_t rd;
+	uint8_t rt;
+
+	r_types r_type;
+	bool is_signed;
+
+	RInstruction(
+		const uint8_t& opcode, const uint8_t& funct, const uint8_t& shamt, const uint8_t& rd, const uint8_t& rs, const uint8_t& rt
+	) : opcode(opcode), funct(funct), shamt(shamt), rs(rs), rd(rd), rt(rt), r_type(get_r_type(opcode, funct)), is_signed(r_type < 13)
+	{
+
+	}
+
+	virtual void execute(uint32_t* R, uint32_t& HI, uint32_t& LO, uint32_t& PC) override
+	{
+		switch (r_type)
+		{
+		case AND:
+			R[rd] = R[rs] & R[rt];
+			break;
+		case JR:
+			PC = R[rs];
+			break;
+		case NOR:
+			R[rd] = ~(R[rs] | R[rt]);
+			break;
+		case OR:
+			R[rd] = R[rs] | R[rt];
+			break;
+		case ADD:
+		case ADDU:
+			R[rd] = R[rs] + R[rt];
+			break;
+		case SUB:
+		case SUBU:
+			R[rd] = R[rs] - R[rt];
+			break;
+		case SLT:
+		case SLTU:
+			R[rd] = R[rs] < R[rt] ? 1 : 0;
+			break;
+		case SLL:
+			R[rd] = R[rs] << shamt;
+			break;
+		case SRL:
+			R[rd] = R[rs] >> shamt;
+			break;
+		case SRA:
+			R[rd] = static_cast<int8_t>(R[rs]) >> shamt;
+			break;
+		case MULT:
+		{
+			const int64_t total = static_cast<int64_t>(R[rs]) * R[rt];
+
+			HI = total >> 32; // Isolate last 32bits
+			LO = total & 0xFFFF'FFFF; // Isolate first 32bits
+
+			break;
+		}
+		case MULTU:
+		{
+			const uint64_t total = static_cast<uint64_t>(R[rs]) * R[rt];
+
+			HI = total >> 32; // Isolate last 32bits
+			LO = total & 0xFFFF'FFFF; // Isolate first 32bits
+
+			break;
+		}
+		case MFHI:
+			R[rd] = HI;
+			break;
+		case MFLO:
+			R[rd] = LO;
+			break;
+		}
+	}
+};

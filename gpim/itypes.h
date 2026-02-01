@@ -1,0 +1,96 @@
+#pragma once
+#include <cstdint>
+#include <stdexcept>
+
+#include "instrtype.h"
+
+enum i_types : uint8_t // may want to add l/s bytes
+{
+	ADDI,
+	ANDI,
+	BEQ,
+	BNE,
+	LW,
+	ORI,
+	SLTI,
+	SW,
+	ADDIU,
+	SLTIU
+};
+
+static i_types get_i_type(const uint8_t& opcode)
+{
+	switch (opcode)
+	{
+	case 0x8: return ADDI;
+	case 0x9: return ADDIU;
+	case 0xC: return ANDI;
+	case 0x4: return BEQ;
+	case 0x5: return BNE;
+	case 0x23: return LW;
+	case 0xD: return ORI;
+	case 0xA: return SLTI;
+	case 0xB: return SLTIU;
+	case 0x2B: return SW;
+	default:
+		throw std::invalid_argument("Unknown I-type function code");
+	}
+}
+
+struct IInstruction : Instruction
+{
+	uint8_t opcode;
+
+	uint8_t rs;
+	uint8_t rt;
+
+	uint16_t imm;
+
+	i_types i_type;
+	bool is_signed;
+
+	IInstruction(
+		const uint8_t& opcode, const uint8_t& rs, const uint8_t& rt, const uint16_t& imm
+	) : opcode(opcode), rs(rs), rt(rt), imm(imm), i_type(get_i_type(opcode)), is_signed(i_type < 8)
+	{
+		
+	}
+
+	virtual void execute(uint32_t* R, uint32_t& HI, uint32_t& LO, uint32_t& PC) override
+	{
+		switch (i_type)
+		{
+		case ADDIU:
+		case ADDI:
+			R[rt] = R[rs] + imm;
+			break;
+		case ANDI:
+			R[rt] = R[rs] & imm;
+			break;
+		case BEQ:
+			if (R[rs] == R[rt])
+			{
+				// modify PC
+			}
+			break;
+		case BNE:
+			if (R[rs] != R[rt])
+			{
+				// modify PC
+			}
+			break;
+		case LW:
+			// Modify data memory
+			break;
+		case SW:
+			// Modify data memory
+			break;
+		case ORI:
+			R[rt] = R[rs] | imm;
+			break;
+		case SLTIU:
+		case SLTI:
+			R[rt] = R[rs] < imm ? 1 : 0;
+		}
+	}
+};
