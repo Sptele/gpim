@@ -2,9 +2,11 @@
 
 #include <cstdint>
 
+#include "progmem.h"
+
 struct Instruction
 {
 	virtual ~Instruction() = default;
-	virtual void execute(uint32_t* R, uint32_t& HI, uint32_t& LO, uint32_t& PC) = 0;
+	virtual void execute(ProgramMemory& data) = 0;
 
 };

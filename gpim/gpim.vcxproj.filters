@@ -35,10 +35,16 @@
     <ClInclude Include="instrtype.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="progmem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="text.bin">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="data.bin">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

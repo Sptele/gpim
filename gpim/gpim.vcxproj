@@ -131,10 +131,12 @@
     <ClInclude Include="itypes.h" />
     <ClInclude Include="jtypes.h" />
     <ClInclude Include="mipsref.h" />
+    <ClInclude Include="progmem.h" />
     <ClInclude Include="rtypes.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="data.bin" />
     <None Include="text.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

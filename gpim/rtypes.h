@@ -65,14 +65,14 @@ static r_types get_r_type(const std::string& text)
 	if (text == "sra")
 		return SRA;
 
-	throw std::invalid_argument("Unknown R-type function code");
+	throw std::invalid_argument("Unknown data.registers-type function code");
 }
 
 static r_types get_r_type(const uint8_t& opcode, const uint8_t& funct)
 {
 	if (opcode != 0)
 	{
-		throw std::invalid_argument("Not an R-type instruction");
+		throw std::invalid_argument("Not an data.registers-type instruction");
 	}
 
 	switch (funct)
@@ -112,7 +112,7 @@ static r_types get_r_type(const uint8_t& opcode, const uint8_t& funct)
 	case 0x03:
 		return SRA;
 	default:
-		throw std::invalid_argument("Unknown R-type function code");
+		throw std::invalid_argument("Unknown data.registers-type function code");
 	}
 }
 
@@ -179,66 +179,66 @@ struct RInstruction : Instruction
 
 	}
 
-	virtual void execute(uint32_t* R, uint32_t& HI, uint32_t& LO, uint32_t& PC) override
+	virtual void execute(ProgramMemory& data) override
 	{
 		switch (r_type)
 		{
 		case AND:
-			R[rd] = R[rs] & R[rt];
+			data.registers[rd] = data.registers[rs] & data.registers[rt];
 			break;
 		case JR:
-			PC = R[rs];
+			data.PC = data.registers[rs];
 			break;
 		case NOR:
-			R[rd] = ~(R[rs] | R[rt]);
+			data.registers[rd] = ~(data.registers[rs] | data.registers[rt]);
 			break;
 		case OR:
-			R[rd] = R[rs] | R[rt];
+			data.registers[rd] = data.registers[rs] | data.registers[rt];
 			break;
 		case ADD:
 		case ADDU:
-			R[rd] = R[rs] + R[rt];
+			data.registers[rd] = data.registers[rs] + data.registers[rt];
 			break;
 		case SUB:
 		case SUBU:
-			R[rd] = R[rs] - R[rt];
+			data.registers[rd] = data.registers[rs] - data.registers[rt];
 			break;
 		case SLT:
 		case SLTU:
-			R[rd] = R[rs] < R[rt] ? 1 : 0;
+			data.registers[rd] = data.registers[rs] < data.registers[rt] ? 1 : 0;
 			break;
 		case SLL:
-			R[rd] = R[rs] << shamt;
+			data.registers[rd] = data.registers[rs] << shamt;
 			break;
 		case SRL:
-			R[rd] = R[rs] >> shamt;
+			data.registers[rd] = data.registers[rs] >> shamt;
 			break;
 		case SRA:
-			R[rd] = static_cast<int8_t>(R[rs]) >> shamt;
+			data.registers[rd] = static_cast<int8_t>(data.registers[rs]) >> shamt;
 			break;
 		case MULT:
 		{
-			const int64_t total = static_cast<int64_t>(R[rs]) * R[rt];
+			const int64_t total = static_cast<int64_t>(data.registers[rs]) * data.registers[rt];
 
-			HI = total >> 32; // Isolate last 32bits
-			LO = total & 0xFFFF'FFFF; // Isolate first 32bits
+			data.r_HI = total >> 32; // Isolate last 32bits
+			data.r_LO = total & 0xFFFF'FFFF; // Isolate first 32bits
 
 			break;
 		}
 		case MULTU:
 		{
-			const uint64_t total = static_cast<uint64_t>(R[rs]) * R[rt];
+			const uint64_t total = static_cast<uint64_t>(data.registers[rs]) * data.registers[rt];
 
-			HI = total >> 32; // Isolate last 32bits
-			LO = total & 0xFFFF'FFFF; // Isolate first 32bits
+			data.r_HI = total >> 32; // Isolate last 32bits
+			data.r_LO = total & 0xFFFF'FFFF; // Isolate first 32bits
 
 			break;
 		}
 		case MFHI:
-			R[rd] = HI;
+			data.registers[rd] = data.r_HI;
 			break;
 		case MFLO:
-			R[rd] = LO;
+			data.registers[rd] = data.r_LO;
 			break;
 		}
 	}

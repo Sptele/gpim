@@ -33,16 +33,16 @@ struct JInstruction : Instruction
 	) : opcode(opcode), address(address), j_type(get_j_type(opcode))
 	{}
 
-	virtual void execute(uint32_t* R, uint32_t& HI, uint32_t& LO, uint32_t& PC) override
+	virtual void execute(ProgramMemory& data) override
 	{
 		switch (j_type)
 		{
 		case J:
-			PC = address; // is this correct?
+			data.PC = address; // is this correct?
 			break;
 		case JAL:
-			R[31] = PC + 8; //???
-			PC = address; //???
+			data.registers[31] = data.PC + 8; //???
+			data.PC = address; //???
 		}
 	}
 };

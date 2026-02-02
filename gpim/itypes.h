@@ -56,25 +56,25 @@ struct IInstruction : Instruction
 		
 	}
 
-	virtual void execute(uint32_t* R, uint32_t& HI, uint32_t& LO, uint32_t& PC) override
+	virtual void execute(ProgramMemory& data) override
 	{
 		switch (i_type)
 		{
 		case ADDIU:
 		case ADDI:
-			R[rt] = R[rs] + imm;
+			data.registers[rt] = data.registers[rs] + imm;
 			break;
 		case ANDI:
-			R[rt] = R[rs] & imm;
+			data.registers[rt] = data.registers[rs] & imm;
 			break;
 		case BEQ:
-			if (R[rs] == R[rt])
+			if (data.registers[rs] == data.registers[rt])
 			{
 				// modify PC
 			}
 			break;
 		case BNE:
-			if (R[rs] != R[rt])
+			if (data.registers[rs] != data.registers[rt])
 			{
 				// modify PC
 			}
@@ -86,11 +86,11 @@ struct IInstruction : Instruction
 			// Modify data memory
 			break;
 		case ORI:
-			R[rt] = R[rs] | imm;
+			data.registers[rt] = data.registers[rs] | imm;
 			break;
 		case SLTIU:
 		case SLTI:
-			R[rt] = R[rs] < imm ? 1 : 0;
+			data.registers[rt] = data.registers[rs] < imm ? 1 : 0;
 		}
 	}
 };
