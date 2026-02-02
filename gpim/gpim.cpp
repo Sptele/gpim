@@ -55,62 +55,7 @@ void print_state(const uint32_t& bits, uint32_t* R, uint32_t& HI, uint32_t& LO, 
 	std::cout << "PC: " << PC << std::endl;
 }
 
-uint32_t compile(const std::string& line)
-{
-	// split string by spaces (exclude commas)
-	std::string commands[4];
-
-	uint8_t arr_i = 0;
-	uint8_t curr_word_i = 0;
-	uint8_t curr_len = 0;
-	for (size_t i = 0; i < line.length() + 1; ++i)
-	{
-		if (line[i] != ',')
-		{
-			if (i == line.length() || line[i] == ' ')
-			{
-				commands[arr_i] = line.substr(curr_word_i, curr_len);
-				curr_word_i = i + 1;
-				curr_len = 0;
-
-				++arr_i;
-			}
-			else ++curr_len;
-		}
-	}
-
-	// For each part of the r-type, identify: command, registers/shamt
-
-	r_types type = get_r_type(commands[0]);
-	auto [opcode, funct] = get_opcode_funct(type);
-
-	// Now read the three registers
-
-	// first = rd
-	// second = rs
-	// third = rt
-
-	bool req_shamt = type == SLL || type == SRL || type == SRA;
-
-	uint8_t rd = get_register_index(commands[1]);
-	uint8_t rs = get_register_index(commands[2]);
-	uint8_t rt = req_shamt ? std::stoul(commands[3]) : get_register_index(commands[3]);
-
-	// Time to encode!
-
-	uint32_t encoded = 0;
-
-	encoded += opcode << 26;
-	encoded += rs << 21;
-	encoded += req_shamt ? 0 : rt << 16;
-	encoded += rd << 11;
-	encoded += req_shamt ? rt << 6 : 0;
-	encoded += funct;
-
-	return encoded;
-}
-
-void load_file(const std::string& path, char* buffer, size_t buffer_length)
+void load_file(const std::string& path, uint8_t* buffer, size_t buffer_length)
 {
 	// Let's just pretend for now that we
 	std::ifstream inp(path, std::ios::in | std::ios::binary);
@@ -121,11 +66,11 @@ void load_file(const std::string& path, char* buffer, size_t buffer_length)
 		return;
 	}
 
-	inp.read(buffer, buffer_length * sizeof(char));
+	inp.read(reinterpret_cast<char*>(buffer), buffer_length * sizeof(char));
 
 	for (size_t i = 0; i < buffer_length; ++i)
 	{
-		std::cout << buffer[i] << " ";
+		std::cout << std::hex << (int) buffer[i] << " ";
 	}
 
 	// TODO: pasting into .bin pastes it as an ASCII strng, not as hex
@@ -146,33 +91,34 @@ int main(int argc, char** argv)
 	}
 
 	std::string inpf = argv[1];
-	int file_length = std::stoi(argv[2]);
-	char* buffer = new char[file_length];
+	int file_length_b = std::stoi(argv[2]) * 4;
+	uint8_t* buffer = new uint8_t[file_length_b];
 
-	load_file(inpf, buffer, file_length);
+	load_file(inpf, buffer, file_length_b);
 
 	uint32_t PC = 0;
-
-	// Buffer now stores the input, byte-addressable
-	// Thus, the PC needs to simply store an index
-	// - to hit words, it needs to be in multiples of 4
-
-
-	// TODO:
-
-	uint32_t bits = 0;
-	
-
-	std::cout << "Instruction bits: " << std::bitset<32>(bits) << " (0x" << std::hex << std::setfill('0') << bits <<
-		std::dec << ")" << std::endl;
-
 	uint32_t registers[32] = {};
 	uint32_t HI_register = 0;
 	uint32_t LO_register = 0;
+    
+	while (true) {
+		uint32_t curr_bits = 0;
 
-	cycle(bits, registers, HI_register, LO_register, PC);
+		// Move over every byte and add it to the current word instruction in the right place
+		for (uint8_t lsa = 24; lsa >= 0; lsa -= 8, PC++) {
+			curr_bits += buffer[PC] << lsa;
+		}
 
-	print_state(bits, registers, HI_register, LO_register, PC);
+		cycle(curr_bits, registers, HI_register, LO_register, PC);
 
+		print_state(curr_bits, registers, HI_register, LO_register, PC);
+	}
+
+	//std::cout << "Instruction bits: " << std::bitset<32>(bits) << " (0x" << std::hex << std::setfill('0') << bits <<
+		//std::dec << ")" << std::endl;
+
+
+
+	// Need to free buffer
 	delete[] buffer;
 }
