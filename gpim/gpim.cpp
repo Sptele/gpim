@@ -73,6 +73,8 @@ void load_file(const std::string& path, uint8_t* buffer, size_t buffer_length)
 		std::cout << std::hex << (int) buffer[i] << " ";
 	}
 
+	std::cout << std::dec << std::endl;
+
 	// TODO: pasting into .bin pastes it as an ASCII strng, not as hex
 	// So, directly paste the hex into your bin file and then open it
 	// Here: 2108000A2129001401095020
@@ -102,10 +104,12 @@ int main(int argc, char** argv)
 	uint32_t LO_register = 0;
     
 	while (true) {
+		if (PC >= file_length_b) break;
+
 		uint32_t curr_bits = 0;
 
 		// Move over every byte and add it to the current word instruction in the right place
-		for (uint8_t lsa = 24; lsa >= 0; lsa -= 8, PC++) {
+		for (int lsa = 24; lsa >= 0; lsa -= 8, PC++) {
 			curr_bits += buffer[PC] << lsa;
 		}
 
