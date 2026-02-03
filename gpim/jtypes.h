@@ -24,25 +24,34 @@ static j_types get_j_type(const uint8_t& opcode)
 struct JInstruction : Instruction
 {
 	uint8_t opcode;
-	uint32_t address;
+	int32_t address;
 
 	j_types j_type;
 
 	JInstruction(
-		const uint8_t& opcode, const uint32_t& address
+		const uint8_t& opcode, const int32_t& address
 	) : opcode(opcode), address(address), j_type(get_j_type(opcode))
-	{}
+	{
+	}
+
+	JInstruction(
+		const uint8_t& opcode, const uint32_t& address
+	) : opcode(opcode), address(static_cast<int32_t>(address)), j_type(get_j_type(opcode))
+	{
+	}
 
 	virtual void execute(ProgramMemory& data) override
 	{
 		switch (j_type)
 		{
-		case J:
-			data.PC = address; // is this correct?
-			break;
 		case JAL:
-			data.registers[31] = data.PC + 8; //???
-			data.PC = address; //???
+			data.registers[31] = reinterpret_cast<uint32_t>(data.PC + 8); //???
+			[[fallthrough]];
+		case J:
+			data.PC = reinterpret_cast<uint32_t*>(
+				reinterpret_cast<uintptr_t>(data.PC) >> 28 | static_cast<uintptr_t>(address * 4)
+				);
+			break;
 		}
 	}
 };

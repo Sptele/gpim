@@ -85,22 +85,18 @@ int main(int argc, char** argv)
 
 	load_file(inpf, buffer, file_length_b);
 
-	ProgramMemory data;
-    
+	ProgramMemory data(buffer, file_length_b);
+
 	while (true) {
-		if (data.PC >= file_length_b) break;
+		if (reinterpret_cast<uint8_t*>(data.PC) >= buffer + file_length_b) break;
 
-		uint32_t curr_bits = 0;
-
-		// Move over every byte and add it to the current word instruction in the right place
-		for (int lsa = 24; lsa >= 0; lsa -= 8, data.PC++) {
-			curr_bits += buffer[data.PC] << lsa;
-		}
+		uint32_t curr_bits = *data.PC;
+		data.PC++;
 
 		cycle(curr_bits, data);
 
 #if PRINT_STATE
-		print_state(curr_bits, data.registers, data.r_HI, data.r_LO, data.PC);
+		print_state(curr_bits, data.registers, data.r_HI, data.r_LO, *data.PC);
 #endif
 	}
 

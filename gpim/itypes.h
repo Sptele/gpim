@@ -68,15 +68,21 @@ struct IInstruction : Instruction
 			data.registers[rt] = data.registers[rs] & imm;
 			break;
 		case BEQ:
-			if (data.registers[rs] == data.registers[rt])
 			{
-				// modify PC
+				if (data.registers[rs] == data.registers[rt])
+				{
+					// offset is given in words, so we 
+					data.PC += (static_cast<int16_t>(imm) * 4) + 4;
+				}
 			}
 			break;
 		case BNE:
-			if (data.registers[rs] != data.registers[rt])
 			{
-				// modify PC
+				if (data.registers[rs] != data.registers[rt])
+				{
+					// modify PC
+					data.PC += (static_cast<int16_t>(imm) * 4) + 4;
+				}
 			}
 			break;
 		case LW:

@@ -187,7 +187,7 @@ struct RInstruction : Instruction
 			data.registers[rd] = data.registers[rs] & data.registers[rt];
 			break;
 		case JR:
-			data.PC = data.registers[rs];
+			//data.PC = data.registers[rs];
 			break;
 		case NOR:
 			data.registers[rd] = ~(data.registers[rs] | data.registers[rt]);
