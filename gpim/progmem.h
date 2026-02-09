@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fstream>
 #include <cstdint>
 
 struct DataManager
@@ -8,12 +9,41 @@ struct DataManager
 
 	std::string file_path;
 
-	DataManager() : file_path("data.bin")
-	{
+	DataManager() : file_path("data.bin") {}
+	DataManager(const std::string& file_path) : file_path(file_path) {}
+
+	void write(const uint32_t& addr, const uint32_t& data) const {
+		// for data.bin
+
+		std::ofstream out(file_path, std::ios::app | std::ios::binary);
+
+		if (!out.is_open()) return; // TODO
+
+		out.seekp(addr, std::ios::beg);
+		out.write(reinterpret_cast<char*>(addr), 4); // may need to write to a buffer
+		out.close();
+
+
 	}
 
-	DataManager(const std::string& file_path) : file_path(file_path)
-	{
+	uint32_t read(const uint32_t& addr) const {
+		std::ifstream in(file_path, std::ios::in | std::ios::binary);
+
+		if (!in.is_open()) return 0; // TODO
+
+		in.seekg(addr, std::ios::beg);
+
+		char buffer[4] = {};
+
+		in.read(buffer, 4);
+		in.close();
+
+		return static_cast<uint32_t>(
+			buffer[0] << 24 +
+			buffer[1] << 16 +
+			buffer[2] << 8 +
+			buffer[3]
+			);
 	}
 };
 
