@@ -15,12 +15,19 @@ struct DataManager
 	void write(const uint32_t& addr, const uint32_t& data) const {
 		// for data.bin
 
-		std::ofstream out(file_path, std::ios::app | std::ios::binary);
+		std::fstream out(file_path, std::ios::in | std::ios::out | std::ios::binary);
 
 		if (!out.is_open()) return; // TODO
 
+		char buffer[4] = {
+			static_cast<char>(data >> 24 & 0xFF),
+			static_cast<char>(data >> 16 & 0xFF),
+			static_cast<char>(data >> 8 & 0xFF),
+			static_cast<char>(data & 0xFF)
+		};
+
 		out.seekp(addr, std::ios::beg);
-		out.write(reinterpret_cast<char*>(addr), 4); // may need to write to a buffer
+		out.write(buffer, 4); // may need to write to a buffer
 		out.close();
 
 
@@ -39,9 +46,9 @@ struct DataManager
 		in.close();
 
 		return static_cast<uint32_t>(
-			buffer[0] << 24 +
-			buffer[1] << 16 +
-			buffer[2] << 8 +
+			(buffer[0] << 24) +
+			(buffer[1] << 16) +
+			(buffer[2] << 8) +
 			buffer[3]
 			);
 	}
@@ -55,6 +62,8 @@ struct ProgramMemory
 	uint32_t r_HI;
 	uint32_t r_LO;
 	uint8_t* buffer;
+
+	DataManager ram;
 
 	ProgramMemory() : PC(nullptr), registers{}, r_HI(0), r_LO(0), buffer()
 	{
@@ -93,4 +102,5 @@ struct ProgramMemory
 
 		return temp + o;
 	}
+
 };

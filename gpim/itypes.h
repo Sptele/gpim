@@ -88,9 +88,12 @@ struct IInstruction : Instruction
 			break;
 		case LW:
 			// Modify data memory
+			data.registers[rt] = data.ram.read(data.registers[rs] + static_cast<int16_t>(imm));
 			break;
 		case SW:
 			// Modify data memory
+			data.ram.write(data.registers[rs] + static_cast<int16_t>(imm), data.registers[rt]);
+
 			break;
 		case ORI:
 			data.registers[rt] = data.registers[rs] | imm;
