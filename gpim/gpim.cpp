@@ -18,7 +18,7 @@ void cycle(const uint32_t& bits, ProgramMemory& data)
 	instr->execute(data);
 }
 
-void print_state(const uint32_t& instruction, uint32_t* R, uint32_t& HI, uint32_t& LO, uint32_t& PC)
+void print_state(const uint32_t& instruction, uint32_t* R, uint32_t& HI, uint32_t& LO, uint8_t* PC)
 {
 	std::cout << "[PC=" << PC << "]->{ ";
 	for (int i = 24; i >= 0; i -= 8)
@@ -88,15 +88,16 @@ int main(int argc, char** argv)
 	ProgramMemory data(buffer, file_length_b);
 
 	while (true) {
-		if (reinterpret_cast<uint8_t*>(data.PC) >= buffer + file_length_b) break;
+		if ((data.PC) >= buffer + file_length_b) break;
 
-		uint32_t curr_bits = *data.PC;
-		data.PC++;
+		uint32_t curr_bits = *data;
+
+		data++;
 
 		cycle(curr_bits, data);
 
 #if PRINT_STATE
-		print_state(curr_bits, data.registers, data.r_HI, data.r_LO, *data.PC);
+		print_state(curr_bits, data.registers, data.r_HI, data.r_LO, data.PC);
 #endif
 	}
 

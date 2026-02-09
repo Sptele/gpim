@@ -8,43 +8,59 @@ struct DataManager
 
 	std::string file_path;
 
-	DataManager() : file_path("data.bin") {}
-	DataManager(const std::string& file_path) : file_path(file_path) {}
+	DataManager() : file_path("data.bin")
+	{
+	}
+
+	DataManager(const std::string& file_path) : file_path(file_path)
+	{
+	}
 };
 
 
 struct ProgramMemory
 {
-	uint32_t* PC;
+	uint8_t* PC;
 	uint32_t registers[32];
 	uint32_t r_HI;
 	uint32_t r_LO;
+	uint8_t* buffer;
 
-	ProgramMemory() : PC(nullptr), registers{}, r_HI(0), r_LO(0)
+	ProgramMemory() : PC(nullptr), registers{}, r_HI(0), r_LO(0), buffer()
 	{
-		
 	}
 
 	ProgramMemory(uint8_t* buffer, int len) : ProgramMemory()
 	{
+		this->buffer = buffer;
 
-		// Reverese every four bytes
-		if (!buffer || len <= 0)
-		{
-			PC = reinterpret_cast<uint32_t*>(buffer);
-			return;
-		}
+		// TODO: instead of just swapping / reinterpret, we can build the PC from the buffer
+		// TODO: then test that PC++ will do the proper endian
+		// TODO: if not, then create a function for the PC
 
-		// Reverse every consecutive 4-byte group in-place.
-		const int groups = len / 4;
-		for (int g = 0; g < groups; ++g)
-		{
-			uint8_t* b = buffer + g * 4;
-			std::swap(b[0], b[3]);
-			std::swap(b[1], b[2]);
-		}
-
-		PC = reinterpret_cast<uint32_t*>(buffer);
+		PC = this->buffer;
 	}
 
+	uint8_t* operator++(int)
+	{
+		uint8_t* rtnr = PC;
+
+		PC += 4;
+
+		return rtnr;
+	}
+
+	uint32_t operator*()
+	{
+		uint8_t* temp = PC;
+
+		return (*temp++ << 24) + (*temp++ << 16) + (*temp++ << 8) + *temp;
+	}
+
+	uint8_t* operator+(const int& o)
+	{
+		uint8_t* temp = PC;
+
+		return temp + o;
+	}
 };

@@ -33,7 +33,8 @@ static i_types get_i_type(const uint8_t& opcode)
 	case 0xB: return SLTIU;
 	case 0x2B: return SW;
 	default:
-		throw std::invalid_argument("Unknown I-type function code");
+		if (opcode != 0x2 && opcode != 0x3)
+			throw std::invalid_argument("Unknown I-type function code");
 	}
 }
 

@@ -45,12 +45,11 @@ struct JInstruction : Instruction
 		switch (j_type)
 		{
 		case JAL:
-			data.registers[31] = reinterpret_cast<uint32_t>(data.PC + 8); //???
+			data.registers[31] = reinterpret_cast<uint32_t>(data + 1); // jump to next word
 			[[fallthrough]];
 		case J:
-			data.PC = reinterpret_cast<uint32_t*>(
-				reinterpret_cast<uintptr_t>(data.PC) >> 28 | static_cast<uintptr_t>(address * 4)
-				);
+			data.PC = reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(data.buffer) +
+				(reinterpret_cast<uintptr_t>(data.PC) >> 28 | static_cast<uintptr_t>(address * 4)));
 			break;
 		}
 	}
