@@ -72,7 +72,7 @@ struct IInstruction : Instruction
 			{
 				if (data.registers[rs] == data.registers[rt])
 				{
-					// offset is given in words, so we 
+					// offset is given in words, so we
 					data.PC += (static_cast<int16_t>(imm) * 4) + 4;
 				}
 			}

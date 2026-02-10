@@ -17,7 +17,7 @@ struct DataManager
 
 		std::fstream out(file_path, std::ios::in | std::ios::out | std::ios::binary);
 
-		if (!out.is_open()) return; // TODO
+		if (!out.is_open()) return;
 
 		char buffer[4] = {
 			static_cast<char>(data >> 24 & 0xFF),
@@ -36,7 +36,7 @@ struct DataManager
 	uint32_t read(const uint32_t& addr) const {
 		std::ifstream in(file_path, std::ios::in | std::ios::binary);
 
-		if (!in.is_open()) return 0; // TODO
+		if (!in.is_open()) return -1; // int max
 
 		in.seekg(addr, std::ios::beg);
 

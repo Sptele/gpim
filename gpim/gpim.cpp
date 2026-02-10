@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 
 	load_file(inpf, buffer, file_length_b);
 
-	ProgramMemory data(buffer, file_length_b);
+	ProgramMemory data(buffer, file_length_b);	
 
 	while (true) {
 		if ((data.PC) >= buffer + file_length_b) break;

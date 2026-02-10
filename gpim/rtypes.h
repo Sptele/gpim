@@ -187,7 +187,7 @@ struct RInstruction : Instruction
 			data.registers[rd] = data.registers[rs] & data.registers[rt];
 			break;
 		case JR:
-			//data.PC = data.registers[rs];
+			data.PC = reinterpret_cast<uint8_t*>(data.registers[rs]);
 			break;
 		case NOR:
 			data.registers[rd] = ~(data.registers[rs] | data.registers[rt]);
@@ -208,13 +208,13 @@ struct RInstruction : Instruction
 			data.registers[rd] = data.registers[rs] < data.registers[rt] ? 1 : 0;
 			break;
 		case SLL:
-			data.registers[rd] = data.registers[rs] << shamt;
+			data.registers[rd] = data.registers[rt] << shamt;
 			break;
 		case SRL:
-			data.registers[rd] = data.registers[rs] >> shamt;
+			data.registers[rd] = data.registers[rt] >> shamt;
 			break;
 		case SRA:
-			data.registers[rd] = static_cast<int8_t>(data.registers[rs]) >> shamt;
+			data.registers[rd] = static_cast<int8_t>(data.registers[rt]) >> shamt;
 			break;
 		case MULT:
 		{
