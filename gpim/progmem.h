@@ -5,8 +5,6 @@
 
 struct DataManager
 {
-	// TODO: read & write function to interact with data.bin
-
 	std::string file_path;
 
 	DataManager() : file_path("data.bin") {}
@@ -57,32 +55,17 @@ struct DataManager
 
 struct ProgramMemory
 {
-	uint8_t* PC;
-	uint32_t registers[32];
-	uint32_t r_HI;
-	uint32_t r_LO;
-	uint8_t* buffer;
-
-	bool debug;
-
-
-
-	DataManager ram;
-
 	ProgramMemory() : PC(nullptr), registers{}, r_HI(0), r_LO(0), buffer(), debug(false)
 	{
 	}
 
-	ProgramMemory(uint8_t* buffer, bool debug) : ProgramMemory()
+	ProgramMemory(uint8_t* buffer, const std::string& dataf, bool debug) : PC(buffer), registers{}, r_HI(0), r_LO(0), buffer(buffer), debug(debug), ram(dataf)
 	{
-		this->buffer = buffer;
-		this->debug = debug;
+	}
 
-		// TODO: instead of just swapping / reinterpret, we can build the PC from the buffer
-		// TODO: then test that PC++ will do the proper endian
-		// TODO: if not, then create a function for the PC
-
-		PC = this->buffer;
+	~ProgramMemory()
+	{
+		delete[] buffer;
 	}
 
 	uint8_t* operator++(int)
@@ -108,27 +91,50 @@ struct ProgramMemory
 		return temp + o;
 	}
 
+	bool is_terminate() const { return terminate; }
+
 	void syscall()
 	{
 		const int V0 = 2;
 		const int A0 = 4;
-		switch (V0)
+		switch (registers[V0])
 		{
 		case 1:
 			std::cout << registers[A0];
 			break;
 		case 4:
-			// No-op
+			char c = static_cast<char>(ram.read(registers[A0]));
+			int i = 0;
+			while (c != '\0') {
+				std::cout << c;
+
+				c = static_cast<char>(ram.read(registers[A0] + i));
+				i++;
+			}
 			break;
 		case 5:
 			std::cin >> registers[V0];
 			break;
 		case 10:
-			exit(0);
+			terminate = true;
+			break;
 		default:
 			// no-op, not implemented
 			if (debug) std::cout << "[gpim] syscall code " << registers[V0] << " not implemented! (no-op)" << std::endl;
 		}
 	}
+
+	uint8_t* PC;
+	uint32_t registers[32];
+	uint32_t r_HI;
+	uint32_t r_LO;
+	uint8_t* buffer;
+
+	bool debug;
+
+	DataManager ram;
+
+private:
+	bool terminate = false;
 
 };

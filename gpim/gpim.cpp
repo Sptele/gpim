@@ -17,14 +17,15 @@ namespace
 		data.registers[0] = 0;
 	}
 
-	void cycle(const uint32_t& bits, ProgramMemory& data)
+	bool cycle(const uint32_t& bits, ProgramMemory& data)
 	{
 		zero(data);
 
 		auto instr = interpret(bits);
 		instr->execute(data);
-
 		zero(data);
+
+		return data.is_terminate();
 	}
 
 	static void print_state(const uint32_t& instruction, uint32_t* R, uint32_t& HI, uint32_t& LO, uint8_t* PC)
@@ -81,7 +82,7 @@ namespace
 		if (!inp.is_open())
 		{
 			std::cerr << "Failed to load instructions!" << std::endl;
-			exit(1);
+			return -1;
 		}
 
 		std::streampos size = inp.tellg();
@@ -90,7 +91,7 @@ namespace
 		if (size == -1)
 		{
 			std::cerr << "Error reading file size!" << std::endl;
-			exit(1);
+			return -1;
 		}
 
 		return size;
@@ -100,7 +101,7 @@ namespace
 	{
 		for (int i = 1; i < argc; ++i)
 		{
-			if (strcmp(argv[i], "-sm") == 0 || strcmp(argv[i], "--safe-mode") == 0 || strcmp(argv[i], "--safe") == 0)
+			if (strcmp(argv[i], "-sm") == 0 || strcmp(argv[i], "--safe-mode") == 0 || strcmp(argv[i], "--safe") == 0 || strcmp(argv[i], "-s") == 0)
 				return true;
 		}
 
@@ -124,35 +125,54 @@ int main(int argc, char** argv)
 {
 	if (argc == 1)
 	{
-		std::cerr << "Usage: " << argv[0] << " <path> <file_length>" << std::endl;
+		std::cerr << "Usage: " << argv[0] << " <text file path> <data file path=\"data.bin\"> <opt:flags>" << std::endl;
+		std::cerr << "Flags:" << std::endl;
+		std::cerr << "\tDebug (-d, --debug, -p, --print, --print-mode): Prints current instructions and any non-zero registers" << std::endl;
+		std::cerr << "\tSafe Mode (-sm, --safe-mode, --safe, -s): Immediately ends execution after the last instruction instead of waiting for a syscall" << std::endl;
 		return 1;
 	}
 
 	std::string inpf = argv[1];
+	std::string dataf = "data.bin";
+	if (argc > 2) dataf = argv[2];
+
 	bool SAFE_MODE = is_safe_mode(argc, argv);
 	bool PRINT_STATE = is_print_mode(argc, argv);
 
 	int file_length_b = get_file_size(inpf);
+
+	if (file_length_b < 0)
+	{
+		std::cerr << "Failed to read file!" << std::endl;
+		return 1;
+	}
+
 	uint8_t* buffer = new uint8_t[file_length_b];
 
 	load_file(inpf, buffer, file_length_b);
 
-	ProgramMemory data(buffer, SAFE_MODE);
+	ProgramMemory data(buffer, dataf, SAFE_MODE);
 
 	while (true)
 	{
-		if (SAFE_MODE && data.PC >= buffer + file_length_b) break;
+		if (SAFE_MODE && data.PC >= buffer + file_length_b) {
+			if (PRINT_STATE) std::cout << "Unsafe termination caught by safe mode!" << std::endl;
+			break;
+		}
 
 		uint32_t curr_bits = *data;
 
 		data++;
 
-		cycle(curr_bits, data);
+		if (cycle(curr_bits, data))
+		{
+			break;
+		}
+
 
 		if (PRINT_STATE)
 			print_state(curr_bits, data.registers, data.r_HI, data.r_LO, data.PC);
 	}
 
-	// Need to free buffer
-	delete[] buffer;
+	// Buffer freed by ProgramMemory
 }
