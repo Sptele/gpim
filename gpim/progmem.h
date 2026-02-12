@@ -63,15 +63,20 @@ struct ProgramMemory
 	uint32_t r_LO;
 	uint8_t* buffer;
 
+	bool debug;
+
+
+
 	DataManager ram;
 
-	ProgramMemory() : PC(nullptr), registers{}, r_HI(0), r_LO(0), buffer()
+	ProgramMemory() : PC(nullptr), registers{}, r_HI(0), r_LO(0), buffer(), debug(false)
 	{
 	}
 
-	ProgramMemory(uint8_t* buffer, int len) : ProgramMemory()
+	ProgramMemory(uint8_t* buffer, bool debug) : ProgramMemory()
 	{
 		this->buffer = buffer;
+		this->debug = debug;
 
 		// TODO: instead of just swapping / reinterpret, we can build the PC from the buffer
 		// TODO: then test that PC++ will do the proper endian
@@ -101,6 +106,29 @@ struct ProgramMemory
 		uint8_t* temp = PC;
 
 		return temp + o;
+	}
+
+	void syscall()
+	{
+		const int V0 = 2;
+		const int A0 = 4;
+		switch (V0)
+		{
+		case 1:
+			std::cout << registers[A0];
+			break;
+		case 4:
+			// No-op
+			break;
+		case 5:
+			std::cin >> registers[V0];
+			break;
+		case 10:
+			exit(0);
+		default:
+			// no-op, not implemented
+			if (debug) std::cout << "[gpim] syscall code " << registers[V0] << " not implemented! (no-op)" << std::endl;
+		}
 	}
 
 };

@@ -9,6 +9,7 @@
 
 enum r_types : uint8_t
 {
+	SYSCALL,
 	ADD,
 	AND,
 	JR,
@@ -64,6 +65,8 @@ static r_types get_r_type(const std::string& text)
 		return MULTU;
 	if (text == "sra")
 		return SRA;
+	if (text == "syscall")
+		return SYSCALL;
 
 	throw std::invalid_argument("Unknown data.registers-type function code");
 }
@@ -77,6 +80,8 @@ static r_types get_r_type(const uint8_t& opcode, const uint8_t& funct)
 
 	switch (funct)
 	{
+	case 0xC:
+		return SYSCALL;
 	case 0x20:
 		return ADD;
 	case 0x21:
@@ -116,49 +121,6 @@ static r_types get_r_type(const uint8_t& opcode, const uint8_t& funct)
 	}
 }
 
-static std::tuple<uint8_t, uint8_t> get_opcode_funct(const r_types& r_type)
-{
-	switch (r_type)
-	{
-	case ADD:
-		return { 0, 0x20 };
-	case ADDU:
-		return { 0, 0x21 };
-	case AND:
-		return { 0, 0x24 };
-	case JR:
-		return { 0, 0x08 };
-	case NOR:
-		return { 0, 0x27 };
-	case OR:
-		return { 0, 0x25 };
-	case SLT:
-		return { 0, 0x2A };
-	case SLTU:
-		return { 0, 0x2B };
-	case SLL:
-		return { 0, 0x00 };
-	case SRL:
-		return { 0, 0x02 };
-	case SUB:
-		return { 0, 0x22 };
-	case SUBU:
-		return { 0, 0x23 };
-	case MFHI:
-		return { 0, 0x10 };
-	case MFLO:
-		return { 0, 0x12 };
-	case MULT:
-		return { 0, 0x18 };
-	case MULTU:
-		return { 0, 0x19 };
-	case SRA:
-		return { 0, 0x03 };
-	}
-
-	return {};
-}
-
 struct RInstruction : Instruction
 {
 	uint8_t opcode;
@@ -183,6 +145,9 @@ struct RInstruction : Instruction
 	{
 		switch (r_type)
 		{
+		case SYSCALL:
+			data.syscall();
+			break;
 		case AND:
 			data.registers[rd] = data.registers[rs] & data.registers[rt];
 			break;

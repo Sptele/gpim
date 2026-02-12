@@ -45,7 +45,7 @@ struct IInstruction : Instruction
 	uint8_t rs;
 	uint8_t rt;
 
-	uint16_t imm;
+	int16_t imm;
 
 	i_types i_type;
 	bool is_signed;
@@ -73,7 +73,7 @@ struct IInstruction : Instruction
 				if (data.registers[rs] == data.registers[rt])
 				{
 					// offset is given in words, so we
-					data.PC += (static_cast<int16_t>(imm) * 4) + 4;
+					data.PC += (imm * 4) + 0;
 				}
 			}
 			break;
@@ -82,17 +82,17 @@ struct IInstruction : Instruction
 				if (data.registers[rs] != data.registers[rt])
 				{
 					// modify PC
-					data.PC += (static_cast<int16_t>(imm) * 4) + 4;
+					data.PC += (imm * 4) + 0;
 				}
 			}
 			break;
 		case LW:
 			// Modify data memory
-			data.registers[rt] = data.ram.read(data.registers[rs] + static_cast<int16_t>(imm));
+			data.registers[rt] = data.ram.read(data.registers[rs] + imm);
 			break;
 		case SW:
 			// Modify data memory
-			data.ram.write(data.registers[rs] + static_cast<int16_t>(imm), data.registers[rt]);
+			data.ram.write(data.registers[rs] + imm, data.registers[rt]);
 
 			break;
 		case ORI:
@@ -100,7 +100,7 @@ struct IInstruction : Instruction
 			break;
 		case SLTIU:
 		case SLTI:
-			data.registers[rt] = data.registers[rs] < imm ? 1 : 0;
+			data.registers[rt] = static_cast<int32_t>(data.registers[rs]) < static_cast<int32_t>(imm) ? 1 : 0;
 		}
 	}
 };

@@ -10,9 +10,7 @@
 
 static std::unique_ptr<Instruction> interpret(const uint32_t& bits)
 {
-	uint8_t opcode = bits >> 26 & 0x3F;
-
-	switch (opcode)
+	switch (uint8_t opcode = bits >> 26 & 0x3F)
 	{
 	case 0: // R-Type
 		return std::make_unique<RInstruction>(RInstruction(
@@ -64,7 +62,7 @@ static std::string get_register_name(const uint8_t& r_num)
 
 static uint8_t get_register_index(const std::string& r_name)
 {
-	if (r_name == "")
+	if (r_name.empty())
 		throw std::invalid_argument("Empty register name!");
 
 	if (r_name == "$zero")
